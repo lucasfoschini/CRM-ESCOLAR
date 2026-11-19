@@ -1,0 +1,360 @@
+// Belo Ramo CRM — schema PROVISÓRIO do protótipo (D-024, D-026).
+// Só dados fictícios. Muda a cada demonstração; sem migrations até estabilizar (usa `db push`).
+// Referência conceitual: docs/07-MODELO-DE-DADOS.md no vault.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Instituição (D-001: registro único, nada fixo no código) ----------
+
+model InstitutionSettings {
+  id                 Int     @id @default(1)
+  name               String
+  timezone           String  @default("America/Sao_Paulo")
+  currentYearLabel   String
+  messageWindowStart String  @default("08:00")
+  messageWindowEnd   String  @default("18:00")
+  officialPhone      String?
+  officialEmail      String?
+}
+
+// ---------- Equipe (simplificado no protótipo; RBAC completo na Fase 3, D-009) ----------
+
+model Role {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+}
+
+model User {
+  id                String                @id @default(cuid())
+  name              String
+  email             String                @unique
+  active            Boolean               @default(true)
+  roleId            String
+  role              Role                  @relation(fields: [roleId], references: [id])
+  applications      ApplicationAssignee[]
+  tasks             TaskAssignee[]
+  classes           ClassTeacher[]
+  timelineEntries   TimelineEntry[]
+  createdAt         DateTime              @default(now())
+}
+
+// ---------- Cadastro: responsáveis, alunos, família, contatos (RF-CAD) ----------
+
+model Family {
+  id        String     @id @default(cuid())
+  label     String
+  guardians Guardian[]
+  students  Student[]
+}
+
+model Guardian {
+  id           String                   @id @default(cuid())
+  name         String
+  familyId     String?
+  family       Family?                  @relation(fields: [familyId], references: [id])
+  contacts     Contact[]
+  students     StudentGuardian[]
+  applications ApplicationGuardian[]
+  tasks        Task[]                   @relation("TaskInterlocutor")
+  createdAt    DateTime                 @default(now())
+}
+
+enum ContactKind {
+  PHONE
+  EMAIL
+}
+
+// RN-013: telefone não é identificador único; histórico mantido por `active`.
+model Contact {
+  id         String      @id @default(cuid())
+  kind       ContactKind
+  value      String
+  isWhatsApp Boolean     @default(false)
+  active     Boolean     @default(true)
+  guardianId String
+  guardian   Guardian    @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+
+  @@index([value])
+}
+
+enum StudentStatus {
+  PRE_ENROLLED
+  ACTIVE
+  TRANSFERRED
+  INACTIVE
+}
+
+model Student {
+  id           String               @id @default(cuid())
+  name         String
+  birthDate    DateTime?
+  status       StudentStatus        @default(ACTIVE)
+  familyId     String?
+  family       Family?              @relation(fields: [familyId], references: [id])
+  guardians    StudentGuardian[]
+  enrollments  Enrollment[]
+  applications EnrollmentApplication[]
+  notes        String?
+  createdAt    DateTime             @default(now())
+}
+
+// RN-008/RN-010: vínculo N:N com parentesco e autorização.
+model StudentGuardian {
+  studentId        String
+  guardianId       String
+  relationship     String
+  isPrimaryContact Boolean  @default(false)
+  authorized       Boolean  @default(true)
+  active           Boolean  @default(true)
+  student          Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian         Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, guardianId])
+}
+
+// ---------- Turmas e matrículas (RF-TUR) ----------
+
+model AcademicYear {
+  id          String        @id @default(cuid())
+  label       String        @unique
+  isCurrent   Boolean       @default(false)
+  classes     SchoolClass[]
+  enrollments Enrollment[]
+}
+
+model SchoolClass {
+  id             String         @id @default(cuid())
+  name           String
+  stage          String
+  shift          String
+  capacity       Int?
+  academicYearId String
+  academicYear   AcademicYear   @relation(fields: [academicYearId], references: [id])
+  teachers       ClassTeacher[]
+  enrollments    Enrollment[]
+}
+
+model ClassTeacher {
+  classId String
+  userId  String
+  role    String       @default("Professora")
+  class   SchoolClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([classId, userId])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  ENDED
+}
+
+// RN-021: troca de turma encerra a matrícula anterior, não apaga.
+model Enrollment {
+  id             String           @id @default(cuid())
+  studentId      String
+  classId        String
+  academicYearId String
+  status         EnrollmentStatus @default(ACTIVE)
+  startDate      DateTime         @default(now())
+  endDate        DateTime?
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class          SchoolClass      @relation(fields: [classId], references: [id])
+  academicYear   AcademicYear     @relation(fields: [academicYearId], references: [id])
+}
+
+// ---------- Captação (RF-CAP; D-021: interessado separado do aluno) ----------
+
+enum StageKind {
+  OPEN
+  WON
+}
+
+model PipelineStage {
+  id             String                  @id @default(cuid())
+  name           String
+  position       Int
+  kind           StageKind               @default(OPEN)
+  // RF-CAP-003: campos exigidos para entrar na etapa (nomes de campos do atendimento).
+  requiredFields String[]
+  // RF-AUT-001: automação simples por etapa (cria tarefa ao entrar).
+  autoTaskTitle  String?
+  autoTaskType   TaskType?
+  applications   EnrollmentApplication[]
+}
+
+enum LossKind {
+  DISINTEREST
+  DISQUALIFIED
+}
+
+model LossReason {
+  id           String                  @id @default(cuid())
+  name         String
+  kind         LossKind
+  applications EnrollmentApplication[]
+}
+
+enum ApplicationStatus {
+  OPEN
+  ENROLLED
+  LOST
+  DISQUALIFIED
+}
+
+enum ContactType {
+  PRESENCIAL
+  TELEFONE
+  WHATSAPP
+  SITE
+  EMAIL
+}
+
+model Prospect {
+  id           String                  @id @default(cuid())
+  childName    String
+  birthDate    DateTime?
+  desiredGrade String?
+  applications EnrollmentApplication[]
+  createdAt    DateTime                @default(now())
+}
+
+model EnrollmentApplication {
+  id                String                @id @default(cuid())
+  title             String
+  status            ApplicationStatus     @default(OPEN)
+  prospectId        String
+  prospect          Prospect              @relation(fields: [prospectId], references: [id])
+  stageId           String
+  stage             PipelineStage         @relation(fields: [stageId], references: [id])
+  stageChangedAt    DateTime              @default(now())
+  contactType       ContactType?
+  source            String?
+  expectedCloseDate DateTime?
+  visitAt           DateTime?
+  description       String?
+  lossReasonId      String?
+  lossReason        LossReason?           @relation(fields: [lossReasonId], references: [id])
+  lossNote          String?
+  studentId         String?
+  student           Student?              @relation(fields: [studentId], references: [id])
+  guardians         ApplicationGuardian[]
+  assignees         ApplicationAssignee[]
+  tasks             Task[]
+  timeline          TimelineEntry[]
+  closedAt          DateTime?
+  createdAt         DateTime              @default(now())
+}
+
+model ApplicationGuardian {
+  applicationId String
+  guardianId    String
+  isPrimary     Boolean               @default(false)
+  relationship  String?
+  application   EnrollmentApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  guardian      Guardian              @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@id([applicationId, guardianId])
+}
+
+model ApplicationAssignee {
+  applicationId String
+  userId        String
+  application   EnrollmentApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([applicationId, userId])
+}
+
+enum TimelineType {
+  CREATED
+  NOTE
+  STAGE_CHANGE
+  TASK_CREATED
+  TASK_DONE
+  TASK_NO_CONTACT
+  TASK_CANCELED
+  ASSIGNEE_ADDED
+  AUTOMATION
+  STATUS_CHANGE
+}
+
+// RN-058 / PEN-059: timeline em tabela própria (provisório).
+model TimelineEntry {
+  id            String                @id @default(cuid())
+  applicationId String
+  application   EnrollmentApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          TimelineType
+  body          String
+  authorId      String?
+  author        User?                 @relation(fields: [authorId], references: [id])
+  createdAt     DateTime              @default(now())
+
+  @@index([applicationId, createdAt])
+}
+
+// ---------- Tarefas e agenda (RF-TAR, RF-AGE; D-023 Pendente: protótipo usa "tudo é tarefa") ----------
+
+enum TaskType {
+  LIGAR
+  EMAIL
+  REUNIAO
+  TAREFA
+  VISITA
+  WHATSAPP
+}
+
+enum TaskPriority {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum TaskStatus {
+  OPEN
+  DONE
+  CANCELED
+}
+
+model Task {
+  id              String                 @id @default(cuid())
+  title           String
+  type            TaskType               @default(TAREFA)
+  priority        TaskPriority           @default(MEDIA)
+  status          TaskStatus             @default(OPEN)
+  dueAt           DateTime
+  hasTime         Boolean                @default(false)
+  durationMin     Int?
+  reminderMin     Int?
+  description     String?
+  report          String?
+  noContactCount  Int                    @default(0)
+  applicationId   String?
+  application     EnrollmentApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interlocutorId  String?
+  interlocutor    Guardian?              @relation("TaskInterlocutor", fields: [interlocutorId], references: [id])
+  assignees       TaskAssignee[]
+  completedAt     DateTime?
+  createdAt       DateTime               @default(now())
+
+  @@index([status, dueAt])
+}
+
+model TaskAssignee {
+  taskId String
+  userId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+}

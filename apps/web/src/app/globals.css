@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/*
+  Tokens do Belo Ramo CRM (protótipo).
+  Primária "ramo" (verde-folha); âmbar só para atenção (atraso); vermelho só para perda/erro.
+  Usar sempre os tokens: nada de hex solto nos componentes.
+*/
+@theme {
+  --color-ink: #1b2420;
+  --color-muted: #56635d;
+  --color-line: #dfe5e0;
+  --color-surface: #f5f7f3;
+  --color-card: #ffffff;
+
+  --color-ramo-50: #edf6f0;
+  --color-ramo-100: #d4eadb;
+  --color-ramo-200: #a9d3b6;
+  --color-ramo-600: #2f6b4f;
+  --color-ramo-700: #245640;
+  --color-ramo-800: #1b4231;
+
+  --color-alerta: #9a5b00;
+  --color-alerta-bg: #fdf2dc;
+  --color-perigo: #b42318;
+  --color-perigo-bg: #fdecea;
+  --color-info: #285a8f;
+  --color-info-bg: #e8f0fa;
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ramo-600);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
