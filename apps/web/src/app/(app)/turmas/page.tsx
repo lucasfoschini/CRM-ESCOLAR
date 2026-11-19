@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Loading, PageHeader, PendingNote } from "@/components/ui";
+import { SeatGrid, SeatLegend } from "@/components/seat-grid";
 import { listClasses } from "@/modules/cadastro/queries";
 
 export const metadata = { title: "Turmas" };
@@ -18,24 +19,30 @@ async function Grid() {
             {items.length ? (
               <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {items.map((c) => {
-                  const full = c.capacity ? c._count.enrollments / c.capacity : 0;
+                  const n = c._count.enrollments;
+                  const free = c.capacity ? c.capacity - n : null;
                   return (
                     <li key={c.id}>
-                      <Link href={`/turmas/${c.id}`} className="block rounded-xl border border-line bg-card p-4 hover:border-ramo-200">
-                        <p className="font-semibold text-ink">{c.name}</p>
-                        <p className="text-sm text-muted">
-                          {c.stage} · {c.shift}
+                      <Link href={`/turmas/${c.id}`} className="block space-y-3 rounded-2xl border border-line bg-card p-4 hover:border-ramo-200">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="text-lg font-bold text-ink">{c.name}</p>
+                          <p className="text-sm text-muted">
+                            <span className="text-base font-bold tabular-nums text-ink">{n}</span>
+                            {c.capacity ? ` de ${c.capacity}` : " alunos"}
+                          </p>
+                        </div>
+                        <SeatGrid enrolled={n} capacity={c.capacity} />
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <SeatLegend />
+                          {free !== null ? (
+                            <span className={`text-xs font-medium ${free <= 0 ? "text-alerta" : "text-ramo-700"}`}>
+                              {free <= 0 ? "Turma cheia" : `${free} vaga${free > 1 ? "s" : ""} livre${free > 1 ? "s" : ""}`}
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="border-t border-line pt-3 text-xs text-muted">
+                          {c.stage} · {c.shift} · {c.teachers.map((t) => t.user.name).join(", ") || "sem professora vinculada"}
                         </p>
-                        <p className="mt-3 text-sm">
-                          <span className="font-semibold tabular-nums">{c._count.enrollments}</span>
-                          {c.capacity ? <span className="text-muted"> de {c.capacity} vagas</span> : " alunos"}
-                        </p>
-                        {c.capacity ? (
-                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ramo-50" aria-hidden>
-                            <div className={`h-full rounded-full ${full >= 1 ? "bg-alerta" : "bg-ramo-600"}`} style={{ width: `${Math.min(100, full * 100)}%` }} />
-                          </div>
-                        ) : null}
-                        <p className="mt-3 text-xs text-muted">{c.teachers.map((t) => t.user.name).join(", ") || "Sem professora vinculada"}</p>
                       </Link>
                     </li>
                   );
