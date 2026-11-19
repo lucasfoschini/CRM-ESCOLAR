@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 /** Classes de botão. Variantes explícitas em vez de props booleanas. */
 export const btn = {
   primary:
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-ramo-600 px-4 text-sm font-semibold text-white hover:bg-ramo-700 disabled:opacity-60",
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-acao px-4 text-sm font-semibold text-acao-ink hover:bg-acao-hover disabled:opacity-60",
   secondary:
     "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-card px-4 text-sm font-semibold text-ink hover:bg-ramo-50 disabled:opacity-60",
   danger:

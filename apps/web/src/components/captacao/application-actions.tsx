@@ -42,7 +42,7 @@ export function StageMover({ stages, current }: { stages: Stage[]; current: Curr
                 onClick={() => setTarget(s)}
                 aria-current={isCurrent ? "step" : undefined}
                 className={`min-h-10 rounded-lg border px-3 text-sm font-medium ${
-                  isCurrent ? "border-ramo-600 bg-ramo-600 text-white" : done ? "border-ramo-200 bg-ramo-50 text-ramo-700 hover:bg-ramo-100" : "border-line bg-card text-muted hover:bg-ramo-50"
+                  isCurrent ? "border-ramo-600 bg-ramo-600 text-card" : done ? "border-ramo-200 bg-ramo-50 text-ramo-700 hover:bg-ramo-100" : "border-line bg-card text-muted hover:bg-ramo-50"
                 }`}
               >
                 {s.name}

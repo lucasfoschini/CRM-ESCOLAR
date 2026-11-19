@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Sidebar } from "@/components/sidebar";
+import { ThemeSelect } from "@/components/theme-select";
 import { ViewAsSelect } from "@/components/view-as";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
@@ -13,7 +14,10 @@ async function TopBar() {
   return (
     <>
       <span className="text-sm font-semibold text-ink">{settings?.name}</span>
-      <ViewAsSelect currentId={current.id} users={users.map((u) => ({ id: u.id, label: `${u.name} (${u.role.name})` }))} />
+      <div className="flex flex-wrap items-center gap-4">
+        <ViewAsSelect currentId={current.id} users={users.map((u) => ({ id: u.id, label: `${u.name} (${u.role.name})` }))} />
+        <ThemeSelect />
+      </div>
     </>
   );
 }

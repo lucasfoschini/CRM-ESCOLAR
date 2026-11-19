@@ -45,7 +45,7 @@ function NavList({ onNavigate, isActive }: { onNavigate?: () => void; isActive: 
     <nav aria-label="Principal" className="space-y-6">
       {groups.map((g) => (
         <div key={g.label}>
-          <p className="px-3 pb-1 text-xs font-medium text-ramo-100/80">{g.label}</p>
+          <p className="px-3 pb-1 text-xs font-medium text-white/70">{g.label}</p>
           <ul className="space-y-0.5">
             {g.items.map(({ href, label, icon: Icon }) => (
               <li key={href}>
@@ -54,7 +54,7 @@ function NavList({ onNavigate, isActive }: { onNavigate?: () => void; isActive: 
                   onClick={onNavigate}
                   aria-current={isActive(href) ? "page" : undefined}
                   className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium ${
-                    isActive(href) ? "bg-white/15 text-white" : "text-ramo-50 hover:bg-white/10"
+                    isActive(href) ? "bg-white/15 text-white" : "text-white/85 hover:bg-white/10"
                   }`}
                 >
                   <Icon aria-hidden className="size-4" />
@@ -77,7 +77,7 @@ function Brand() {
       </span>
       <span className="font-bold leading-tight">
         Belo Ramo
-        <span className="block text-xs font-medium text-ramo-100">CRM escolar</span>
+        <span className="block text-xs font-medium text-white/70">CRM escolar</span>
       </span>
     </Link>
   );
@@ -105,7 +105,7 @@ export function Sidebar() {
       </div>
       {open ? (
         <div role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-40 lg:hidden" onKeyDown={(e) => e.key === "Escape" && setOpen(false)}>
-          <button type="button" aria-label="Fechar menu" className="absolute inset-0 bg-ink/40" onClick={() => setOpen(false)} />
+          <button type="button" aria-label="Fechar menu" className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
           <div className="relative flex h-full w-72 flex-col gap-8 bg-ramo-800 px-3 py-5">
             <div className="flex items-center justify-between">
               <Brand />

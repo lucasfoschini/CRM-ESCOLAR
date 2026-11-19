@@ -1,23 +1,30 @@
 @import "tailwindcss";
 
 /*
-  Tokens do Belo Ramo CRM (protótipo).
-  Primária "ramo" (verde-folha); âmbar só para atenção (atraso); vermelho só para perda/erro.
+  Tokens do Belo Ramo CRM, com as cores do site da escola:
+  off-white #f4f2ef (fundo), azul #344c73 (marca/texto), amarelo #ffd541 (ação),
+  azul claro #a0c5fc (apoio), marrom #946437 (detalhe).
+  Escala "ramo" = azul da marca. Âmbar só para atenção (atraso); vermelho só para perda/erro.
   Usar sempre os tokens: nada de hex solto nos componentes.
 */
 @theme {
-  --color-ink: #1b2420;
-  --color-muted: #56635d;
-  --color-line: #dfe5e0;
-  --color-surface: #f5f7f3;
+  --color-ink: #1f2d45;
+  --color-muted: #5a6478;
+  --color-line: #e3ded6;
+  --color-surface: #f4f2ef;
   --color-card: #ffffff;
 
-  --color-ramo-50: #edf6f0;
-  --color-ramo-100: #d4eadb;
-  --color-ramo-200: #a9d3b6;
-  --color-ramo-600: #2f6b4f;
-  --color-ramo-700: #245640;
-  --color-ramo-800: #1b4231;
+  --color-ramo-50: #edf3fe;
+  --color-ramo-100: #d6e6fe;
+  --color-ramo-200: #a0c5fc;
+  --color-ramo-600: #344c73;
+  --color-ramo-700: #2b3f60;
+  --color-ramo-800: #344c73;
+
+  --color-acao: #ffd541;
+  --color-acao-hover: #f5c518;
+  --color-acao-ink: #263a5a;
+  --color-marrom: #946437;
 
   --color-alerta: #9a5b00;
   --color-alerta-bg: #fdf2dc;
@@ -27,6 +34,37 @@
   --color-info-bg: #e8f0fa;
 
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+/* Modo escuro: data-theme vem do script em app/layout.tsx (escolha do usuário ou do sistema); só os tokens mudam. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-ink: #e8ecf3;
+  --color-muted: #9aa6ba;
+  --color-line: #2c3a52;
+  --color-surface: #121a27;
+  --color-card: #1a2435;
+
+  --color-ramo-50: #22314a;
+  --color-ramo-100: #2c3f5e;
+  --color-ramo-200: #3e5680;
+  --color-ramo-600: #a0c5fc;
+  --color-ramo-700: #b9d4fd;
+  --color-ramo-800: #0f1726;
+
+  --color-acao-ink: #1a2435;
+  --color-marrom: #c8925e;
+
+  --color-alerta: #f5c46b;
+  --color-alerta-bg: #3a2a10;
+  --color-perigo: #f97066;
+  --color-perigo-bg: #3b1614;
+  --color-info: #a0c5fc;
+  --color-info-bg: #1c2b44;
 }
 
 body {

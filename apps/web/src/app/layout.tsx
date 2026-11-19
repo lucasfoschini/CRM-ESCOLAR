@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 import "./globals.css";
+import { themeScript } from "@/components/theme-select";
 
 const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"] });
 
@@ -12,7 +13,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${figtree.variable} h-full antialiased`}>
+    // data-theme é definido pelo script antes da hidratação.
+    <html lang="pt-BR" className={`${figtree.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );
