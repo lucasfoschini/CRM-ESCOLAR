@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // Importação de planilhas (.xlsx até 5 MB) passa por Server Action.
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
   transpilePackages: ["@belo-ramo/db"],
   turbopack: {
     rules: {

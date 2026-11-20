@@ -19,6 +19,9 @@ const phone = () => `(11) 9${faker.string.numeric(4)}-${faker.string.numeric(4)}
 async function reset() {
   // Ordem respeita as chaves estrangeiras.
   await prisma.$transaction([
+    prisma.message.deleteMany(),
+    prisma.conversation.deleteMany(),
+    prisma.messageTemplate.deleteMany(),
     prisma.timelineEntry.deleteMany(),
     prisma.taskAssignee.deleteMany(),
     prisma.task.deleteMany(),
@@ -144,6 +147,7 @@ async function main() {
   const contactTypes: ContactType[] = ["WHATSAPP", "WHATSAPP", "WHATSAPP", "TELEFONE", "PRESENCIAL", "SITE"];
   const grades = ["Berçário", "Maternal I", "Maternal II", "Jardim I", "Jardim II"];
 
+  const leads: { guardianId: string; childName: string; visitAt: Date | null }[] = [];
   for (let a = 0; a < 38; a++) {
     const lastName = faker.person.lastName();
     const childName = `${faker.person.firstName()} ${lastName}`;
@@ -173,6 +177,7 @@ async function main() {
         timeline: { create: { type: "CREATED", body: "Atendimento criado", createdAt } },
       },
     });
+    if (status === "OPEN") leads.push({ guardianId: guardian.id, childName, visitAt: app.visitAt });
     if (stageIdx > 0)
       await prisma.timelineEntry.create({ data: { applicationId: app.id, type: "STAGE_CHANGE", body: `Etapa alterada para ${stage.name}`, createdAt: new Date(createdAt.getTime() + day) } });
 
@@ -210,8 +215,48 @@ async function main() {
     }
   }
 
-  const counts = await Promise.all([prisma.student.count(), prisma.guardian.count(), prisma.enrollmentApplication.count(), prisma.task.count()]);
-  console.log(`Seed fictício: ${counts[0]} alunos, ${counts[1]} responsáveis, ${counts[2]} atendimentos, ${counts[3]} tarefas.`);
+  // ---------- WhatsApp simulado (D-027): modelos e conversas de exemplo ----------
+  await prisma.messageTemplate.createMany({
+    data: [
+      { shortcut: "ola", name: "Saudação", body: "Olá, {{responsavel}}! Aqui é da secretaria da escola. Como podemos ajudar?" },
+      { shortcut: "visita", name: "Confirmação de visita", body: "Olá, {{responsavel}}! Confirmamos a visita à escola em {{data}} às {{hora}}, em {{local}}. Até lá!" },
+      { shortcut: "valores", name: "Envio de valores", body: "{{responsavel}}, segue a tabela de valores para a série de {{aluno}}. Qualquer dúvida, estamos à disposição." },
+      { shortcut: "documentos", name: "Documentos para matrícula", body: "Para a matrícula, traga: certidão de nascimento da criança, documento do responsável e comprovante de endereço." },
+      { shortcut: "turma", name: "Recado sobre a turma", body: "Olá, {{responsavel}}! Um recado sobre a turma {{turma}} de {{aluno}}:" },
+    ],
+  });
+  const firstName = (s: string) => s.split(" ")[0];
+  const inbound = ["Boa tarde! Ainda tem vaga para o ano que vem?", "Olá, gostaria de saber os valores.", "Oi! Podemos remarcar a visita?", "Qual o horário de funcionamento?", "Vocês aceitam criança de 2 anos?"];
+  const statuses = ["OPEN", "OPEN", "WAITING", "PENDING", "RESOLVED"] as const;
+  for (const [i, lead] of leads.slice(0, 10).entries()) {
+    const contact = await prisma.contact.findFirstOrThrow({ where: { guardianId: lead.guardianId, kind: "PHONE" } });
+    const status = statuses[i % statuses.length];
+    const start = at(-(i % 6), 9 + (i % 8));
+    const msgs = [
+      { direction: "IN" as const, body: pick(inbound), createdAt: start },
+      { direction: "OUT" as const, body: `Olá, ${firstName((await prisma.guardian.findUniqueOrThrow({ where: { id: lead.guardianId } })).name)}! Temos sim. Quer agendar uma visita para conhecer a escola com ${firstName(lead.childName)}?`, authorId: pick(atendentes).id, createdAt: new Date(start.getTime() + 20 * 60_000) },
+      ...(status === "WAITING" ? [] : [{ direction: "IN" as const, body: pick(["Quero sim!", "Pode ser na semana que vem?", "Obrigada, vou ver com meu marido.", "Perfeito."]), createdAt: new Date(start.getTime() + 3_600_000) }]),
+      ...(i % 3 === 0 ? [{ direction: "NOTE" as const, body: "Mãe prefere contato depois das 17h.", authorId: pick(atendentes).id, createdAt: new Date(start.getTime() + 3_700_000) }] : []),
+    ];
+    await prisma.conversation.create({
+      data: {
+        phone: contact.value,
+        contactId: contact.id,
+        status,
+        assigneeId: i % 4 === 0 ? null : pick(atendentes).id,
+        unread: status === "OPEN" ? 1 + (i % 3) : 0,
+        lastMessageAt: msgs.filter((m) => m.direction !== "NOTE").at(-1)!.createdAt,
+        createdAt: start,
+        messages: { create: msgs },
+      },
+    });
+  }
+  await prisma.conversation.create({
+    data: { phone: phone(), status: "OPEN", unread: 1, lastMessageAt: at(0, 8, 15), messages: { create: { direction: "IN", body: "Bom dia, vi o anúncio no Instagram. Como faço para matricular?", createdAt: at(0, 8, 15) } } },
+  });
+
+  const counts = await Promise.all([prisma.student.count(), prisma.guardian.count(), prisma.enrollmentApplication.count(), prisma.task.count(), prisma.conversation.count()]);
+  console.log(`Seed fictício: ${counts[0]} alunos, ${counts[1]} responsáveis, ${counts[2]} atendimentos, ${counts[3]} tarefas, ${counts[4]} conversas.`);
 }
 
 main()

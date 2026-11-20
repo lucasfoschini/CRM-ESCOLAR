@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PlanilhaActions } from "@/components/planilha";
 import { Badge, EmptyState, Loading, PageHeader, btn, field } from "@/components/ui";
+import { importGuardians } from "@/modules/cadastro/import-actions";
 import { listGuardians } from "@/modules/cadastro/queries";
 
 export const metadata = { title: "Responsáveis" };
@@ -60,7 +62,11 @@ async function List({ searchParams }: { searchParams: PageProps<"/responsaveis">
 export default function ResponsaveisPage({ searchParams }: PageProps<"/responsaveis">) {
   return (
     <>
-      <PageHeader title="Responsáveis" description="Um único cadastro por pessoa: serve para os alunos matriculados e para os atendimentos de captação." />
+      <PageHeader
+        title="Responsáveis"
+        description="Um único cadastro por pessoa: serve para os alunos matriculados e para os atendimentos de captação."
+        actions={<PlanilhaActions exportHref="/responsaveis/exportar" importAction={importGuardians} />}
+      />
       <Suspense fallback={<Loading />}>
         <List searchParams={searchParams} />
       </Suspense>

@@ -75,9 +75,9 @@ export function Loading({ label = "Carregando…" }: { label?: string }) {
 }
 
 /** Abas por link (estado na URL, funciona sem JavaScript). */
-export function Tabs({ items, current }: { items: { href: string; label: string; key: string; count?: number }[]; current: string }) {
+export function Tabs({ items, current, className = "mb-4" }: { items: { href: string; label: string; key: string; count?: number }[]; current: string; className?: string }) {
   return (
-    <nav aria-label="Filtros" className="mb-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line">
+    <nav aria-label="Filtros" className={`${className} flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line`}>
       {items.map((t) => {
         const active = t.key === current;
         return (

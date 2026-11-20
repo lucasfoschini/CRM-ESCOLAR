@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PrintButton } from "@/components/print-button";
 import { Card, CardTitle, Loading, PageHeader, Tabs } from "@/components/ui";
-import { now, startOfDay } from "@/lib/dates";
+import { prisma } from "@/lib/db";
+import { TZ, now, startOfDay } from "@/lib/dates";
 import { studentStatusLabel, taskTypeLabel } from "@/lib/labels";
 import { getReports } from "@/modules/relatorios/queries";
 
@@ -51,15 +53,20 @@ async function Reports({ searchParams }: { searchParams: PageProps<"/relatorios"
   const period: Period = typeof periodo === "string" && periodo in PERIODS ? (periodo as Period) : "30";
   const ref = await now();
   const today = startOfDay(ref);
-  const r = await getReports(startOfDay(ref, -Number(period)), today);
+  const [r, settings] = await Promise.all([getReports(startOfDay(ref, -Number(period)), today), prisma.institutionSettings.findUnique({ where: { id: 1 } })]);
   const t = r.tasks;
 
   return (
     <>
-      <Tabs current={period} items={Object.entries(PERIODS).map(([key, label]) => ({ key, label, href: `/relatorios?periodo=${key}` }))} />
+      <div className="print:hidden">
+        <Tabs current={period} items={Object.entries(PERIODS).map(([key, label]) => ({ key, label, href: `/relatorios?periodo=${key}` }))} />
+      </div>
+      <p className="mb-6 hidden border-b border-line pb-3 text-sm text-muted print:block">
+        {settings?.name} · {PERIODS[period]} · gerado em {ref.toLocaleString("pt-BR", { timeZone: TZ, dateStyle: "short", timeStyle: "short" })}
+      </p>
 
       <h2 className="mb-2 font-semibold text-ink">Captação</h2>
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 print:grid-cols-4">
         <Stat label="Novos atendimentos" value={r.captacao.created} />
         <Stat label="Matrículas" value={r.captacao.enrolled} hint="atendimentos fechados como matriculado" />
         <Stat label="Perdidos" value={r.captacao.lost} hint="desinteresse + desqualificado" />
@@ -84,7 +91,7 @@ async function Reports({ searchParams }: { searchParams: PageProps<"/relatorios"
       </div>
 
       <h2 className="mb-2 font-semibold text-ink">Tarefas</h2>
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3 print:grid-cols-3">
         <Stat label="Concluídas" value={t.done} />
         <Stat label="Concluídas no prazo" value={pct(t.done ? t.onTime / t.done : null)} hint={`${t.onTime} de ${t.done}`} />
         <Stat label="Atrasadas agora" value={t.overdue} tone="alerta" />
@@ -148,7 +155,7 @@ async function Reports({ searchParams }: { searchParams: PageProps<"/relatorios"
 export default function RelatoriosPage({ searchParams }: PageProps<"/relatorios">) {
   return (
     <>
-      <PageHeader title="Relatórios" description="Captação, tarefas e ocupação da escola no período escolhido." />
+      <PageHeader title="Relatórios" description="Captação, tarefas e ocupação da escola no período escolhido." actions={<PrintButton />} />
       <Suspense fallback={<Loading />}>
         <Reports searchParams={searchParams} />
       </Suspense>

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PlanilhaActions } from "@/components/planilha";
 import { Badge, EmptyState, Loading, PageHeader, btn, field } from "@/components/ui";
 import { ageInYears, now } from "@/lib/dates";
 import { studentStatusLabel } from "@/lib/labels";
+import { importStudents } from "@/modules/cadastro/import-actions";
 import { listClasses, listStudents } from "@/modules/cadastro/queries";
 
 export const metadata = { title: "Alunos" };
@@ -80,7 +82,11 @@ async function List({ searchParams }: { searchParams: PageProps<"/alunos">["sear
 export default function AlunosPage({ searchParams }: PageProps<"/alunos">) {
   return (
     <>
-      <PageHeader title="Alunos" description="Alunos matriculados. Novos alunos entram pela matrícula de um atendimento (ou, no futuro, pela importação das planilhas)." />
+      <PageHeader
+        title="Alunos"
+        description="Alunos matriculados. Novos alunos entram pela matrícula de um atendimento ou pela importação de planilha Excel."
+        actions={<PlanilhaActions exportHref="/alunos/exportar" importAction={importStudents} />}
+      />
       <Suspense fallback={<Loading />}>
         <List searchParams={searchParams} />
       </Suspense>

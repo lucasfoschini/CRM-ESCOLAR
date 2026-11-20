@@ -1,4 +1,13 @@
-import type { ApplicationStatus, ContactType, TaskPriority, TaskType, StudentStatus } from "@belo-ramo/db";
+import type { ApplicationStatus, ContactType, ConversationStatus, TaskPriority, TaskType, StudentStatus } from "@belo-ramo/db";
+
+// RF-WPP-006: valores provisórios (CTR-11), a validar com a escola.
+export const conversationStatusLabel: Record<ConversationStatus, string> = {
+  OPEN: "Aberta",
+  PENDING: "Pendente",
+  WAITING: "Aguardando cliente",
+  RESOLVED: "Finalizada",
+};
+export const conversationStatusTone = { OPEN: "info", PENDING: "alerta", WAITING: "neutral", RESOLVED: "ramo" } as const satisfies Record<ConversationStatus, string>;
 
 export const taskTypeLabel: Record<TaskType, string> = {
   LIGAR: "Ligar",

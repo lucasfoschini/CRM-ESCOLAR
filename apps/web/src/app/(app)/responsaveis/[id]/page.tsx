@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Badge, Card, CardTitle, Loading, btn } from "@/components/ui";
 import { applicationStatusLabel } from "@/lib/labels";
 import { getGuardian } from "@/modules/cadastro/queries";
+import { openConversation } from "@/modules/whatsapp/actions";
 
 async function Detail({ params }: { params: PageProps<"/responsaveis/[id]">["params"] }) {
   const { id } = await params;
@@ -26,7 +27,15 @@ async function Detail({ params }: { params: PageProps<"/responsaveis/[id]">["par
             {g.contacts.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-2 px-4 py-2">
                 <span className={c.active ? "text-ink" : "text-muted line-through"}>{c.value}</span>
-                <span className="flex gap-1">
+                <span className="flex items-center gap-1">
+                  {c.isWhatsApp && c.active ? (
+                    <form action={openConversation}>
+                      <input type="hidden" name="contactId" value={c.id} />
+                      <button type="submit" className={btn.ghost}>
+                        Conversa
+                      </button>
+                    </form>
+                  ) : null}
                   {c.isWhatsApp ? <Badge tone="ramo">WhatsApp</Badge> : null}
                   {!c.active ? <Badge>Antigo</Badge> : null}
                 </span>

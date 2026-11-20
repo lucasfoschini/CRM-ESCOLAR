@@ -85,3 +85,19 @@ body {
     animation: none !important;
   }
 }
+
+/* Relatório em PDF: impressão do navegador em A4, mantendo as cores das barras. */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  section {
+    break-inside: avoid;
+  }
+}

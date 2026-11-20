@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ChartColumn, CheckSquare, GraduationCap, Kanban, LayoutDashboard, Menu, School, Sprout, Users, X } from "lucide-react";
+import { CalendarDays, ChartColumn, CheckSquare, GraduationCap, Kanban, LayoutDashboard, Menu, MessageCircle, School, Sprout, Users, X } from "lucide-react";
 import { Suspense, useState } from "react";
 
 const groups = [
@@ -11,6 +11,7 @@ const groups = [
     items: [
       { href: "/", label: "Hoje", icon: LayoutDashboard },
       { href: "/atendimentos", label: "Atendimentos", icon: Kanban },
+      { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
       { href: "/tarefas", label: "Tarefas", icon: CheckSquare },
       { href: "/agenda", label: "Agenda", icon: CalendarDays },
     ],

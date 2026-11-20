@@ -43,6 +43,7 @@ export const fmtDate = (d: Date) => fmt({ day: "2-digit", month: "2-digit", year
 export const fmtDayMonth = (d: Date) => fmt({ day: "2-digit", month: "short" }).format(d);
 export const fmtTime = (d: Date) => fmt({ hour: "2-digit", minute: "2-digit" }).format(d);
 export const fmtDateTime = (d: Date) => fmt({ day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
+export const fmtDayLong = (d: Date) => fmt({ day: "numeric", month: "long" }).format(d);
 export const fmtWeekday = (d: Date) => fmt({ weekday: "short", day: "2-digit", month: "2-digit" }).format(d);
 
 /** Dias inteiros entre duas datas (para "dias na etapa"). */

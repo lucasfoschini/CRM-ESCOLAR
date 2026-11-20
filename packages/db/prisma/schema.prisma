@@ -33,17 +33,19 @@ model Role {
 }
 
 model User {
-  id                String                @id @default(cuid())
-  name              String
-  email             String                @unique
-  active            Boolean               @default(true)
-  roleId            String
-  role              Role                  @relation(fields: [roleId], references: [id])
-  applications      ApplicationAssignee[]
-  tasks             TaskAssignee[]
-  classes           ClassTeacher[]
-  timelineEntries   TimelineEntry[]
-  createdAt         DateTime              @default(now())
+  id              String                @id @default(cuid())
+  name            String
+  email           String                @unique
+  active          Boolean               @default(true)
+  roleId          String
+  role            Role                  @relation(fields: [roleId], references: [id])
+  applications    ApplicationAssignee[]
+  tasks           TaskAssignee[]
+  classes         ClassTeacher[]
+  timelineEntries TimelineEntry[]
+  messages        Message[]
+  conversations   Conversation[]
+  createdAt       DateTime              @default(now())
 }
 
 // ---------- Cadastro: responsáveis, alunos, família, contatos (RF-CAD) ----------
@@ -56,15 +58,15 @@ model Family {
 }
 
 model Guardian {
-  id           String                   @id @default(cuid())
+  id           String                @id @default(cuid())
   name         String
   familyId     String?
-  family       Family?                  @relation(fields: [familyId], references: [id])
+  family       Family?               @relation(fields: [familyId], references: [id])
   contacts     Contact[]
   students     StudentGuardian[]
   applications ApplicationGuardian[]
-  tasks        Task[]                   @relation("TaskInterlocutor")
-  createdAt    DateTime                 @default(now())
+  tasks        Task[]                @relation("TaskInterlocutor")
+  createdAt    DateTime              @default(now())
 }
 
 enum ContactKind {
@@ -74,14 +76,15 @@ enum ContactKind {
 
 // RN-013: telefone não é identificador único; histórico mantido por `active`.
 model Contact {
-  id         String      @id @default(cuid())
-  kind       ContactKind
-  value      String
-  isWhatsApp Boolean     @default(false)
-  active     Boolean     @default(true)
-  guardianId String
-  guardian   Guardian    @relation(fields: [guardianId], references: [id], onDelete: Cascade)
-  createdAt  DateTime    @default(now())
+  id            String         @id @default(cuid())
+  kind          ContactKind
+  value         String
+  isWhatsApp    Boolean        @default(false)
+  active        Boolean        @default(true)
+  guardianId    String
+  guardian      Guardian       @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  createdAt     DateTime       @default(now())
 
   @@index([value])
 }
@@ -94,17 +97,17 @@ enum StudentStatus {
 }
 
 model Student {
-  id           String               @id @default(cuid())
+  id           String                  @id @default(cuid())
   name         String
   birthDate    DateTime?
-  status       StudentStatus        @default(ACTIVE)
+  status       StudentStatus           @default(ACTIVE)
   familyId     String?
-  family       Family?              @relation(fields: [familyId], references: [id])
+  family       Family?                 @relation(fields: [familyId], references: [id])
   guardians    StudentGuardian[]
   enrollments  Enrollment[]
   applications EnrollmentApplication[]
   notes        String?
-  createdAt    DateTime             @default(now())
+  createdAt    DateTime                @default(now())
 }
 
 // RN-008/RN-010: vínculo N:N com parentesco e autorização.
@@ -146,9 +149,9 @@ model SchoolClass {
 model ClassTeacher {
   classId String
   userId  String
-  role    String       @default("Professora")
-  class   SchoolClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
-  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role    String      @default("Professora")
+  class   SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([classId, userId])
 }
@@ -327,25 +330,25 @@ enum TaskStatus {
 }
 
 model Task {
-  id              String                 @id @default(cuid())
-  title           String
-  type            TaskType               @default(TAREFA)
-  priority        TaskPriority           @default(MEDIA)
-  status          TaskStatus             @default(OPEN)
-  dueAt           DateTime
-  hasTime         Boolean                @default(false)
-  durationMin     Int?
-  reminderMin     Int?
-  description     String?
-  report          String?
-  noContactCount  Int                    @default(0)
-  applicationId   String?
-  application     EnrollmentApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  interlocutorId  String?
-  interlocutor    Guardian?              @relation("TaskInterlocutor", fields: [interlocutorId], references: [id])
-  assignees       TaskAssignee[]
-  completedAt     DateTime?
-  createdAt       DateTime               @default(now())
+  id             String                 @id @default(cuid())
+  title          String
+  type           TaskType               @default(TAREFA)
+  priority       TaskPriority           @default(MEDIA)
+  status         TaskStatus             @default(OPEN)
+  dueAt          DateTime
+  hasTime        Boolean                @default(false)
+  durationMin    Int?
+  reminderMin    Int?
+  description    String?
+  report         String?
+  noContactCount Int                    @default(0)
+  applicationId  String?
+  application    EnrollmentApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interlocutorId String?
+  interlocutor   Guardian?              @relation("TaskInterlocutor", fields: [interlocutorId], references: [id])
+  assignees      TaskAssignee[]
+  completedAt    DateTime?
+  createdAt      DateTime               @default(now())
 
   @@index([status, dueAt])
 }
@@ -357,4 +360,62 @@ model TaskAssignee {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([taskId, userId])
+}
+
+// ---------- WhatsApp SIMULADO (D-027): nada sai nem chega pela API ----------
+
+// RF-WPP-006: valores provisórios do PLANO (aberta, pendente, aguardando resposta, resolvida) — CTR-11.
+enum ConversationStatus {
+  OPEN
+  PENDING
+  WAITING
+  RESOLVED
+}
+
+// RF-WPP-007: NOTE é nota interna, nunca enviada ao responsável.
+enum MessageDirection {
+  IN
+  OUT
+  NOTE
+}
+
+// RF-WPP-004: conversa ligada ao Contact (não direto ao responsável); sem Contact = não identificada.
+model Conversation {
+  id            String             @id @default(cuid())
+  phone         String
+  contactId     String?
+  contact       Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  status        ConversationStatus @default(OPEN)
+  // RF-WPP-005 (simulado): atendente atual; nulo = "sem atendente", como no SIG.
+  assigneeId    String?
+  assignee      User?              @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  // Recebidas ainda não abertas pela equipe (contador da lista).
+  unread        Int                @default(0)
+  archived      Boolean            @default(false)
+  lastMessageAt DateTime           @default(now())
+  messages      Message[]
+  createdAt     DateTime           @default(now())
+
+  @@index([status, lastMessageAt])
+}
+
+model Message {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction      MessageDirection
+  body           String
+  authorId       String?
+  author         User?            @relation(fields: [authorId], references: [id])
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// RF-WPP-011/012: mensagem rápida chamada por /atalho; o corpo pode ter variáveis {{nome}}.
+model MessageTemplate {
+  id       String @id @default(cuid())
+  shortcut String @unique
+  name     String
+  body     String
 }

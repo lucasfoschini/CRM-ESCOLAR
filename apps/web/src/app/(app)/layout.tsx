@@ -25,17 +25,19 @@ async function TopBar() {
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <Sidebar />
+      <div className="contents print:hidden">
+        <Sidebar />
+      </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="border-b border-alerta/20 bg-alerta-bg px-4 py-1.5 text-center text-xs font-medium text-alerta">
+        <div className="border-b border-alerta/20 bg-alerta-bg px-4 py-1.5 print:hidden text-center text-xs font-medium text-alerta">
           Protótipo para demonstração · todos os dados são fictícios
         </div>
-        <div className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-line bg-card px-4 lg:px-8">
+        <div className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-line bg-card px-4 lg:px-8 print:hidden">
           <Suspense fallback={<span className="text-sm text-muted">…</span>}>
             <TopBar />
           </Suspense>
         </div>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8">{children}</main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8 print:max-w-none print:p-0 has-[[data-fullbleed]]:max-w-none has-[[data-fullbleed]]:p-0">{children}</main>
       </div>
     </div>
   );
