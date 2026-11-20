@@ -1,0 +1,10 @@
+**/node_modules
+**/.next
+**/*.tsbuildinfo
+packages/db/src/generated
+.pgdata
+.git
+.env
+.env.*
+!.env.example
+*.log

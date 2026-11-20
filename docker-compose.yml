@@ -1,0 +1,47 @@
+# Uso (ver README):
+#   docker compose up -d db                      só o banco (para `pnpm dev` local)
+#   docker compose --profile setup run --rm setup  cria o schema e o seed fictício
+#   docker compose up -d --build                 banco + app em http://localhost:3000
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: belo_ramo_dev
+      # Sem senha, igual ao .env.example. Porta publicada só em 127.0.0.1. Protótipo com dados fictícios.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d belo_ramo_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build: .
+    image: belo-ramo-crm-web
+    environment: &dbenv
+      DATABASE_URL: postgresql://postgres@db:5432/belo_ramo_dev
+      DIRECT_URL: postgresql://postgres@db:5432/belo_ramo_dev
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Recria schema e dados fictícios (apaga o que existir).
+  setup:
+    build: .
+    image: belo-ramo-crm-web
+    profiles: [setup]
+    environment: *dbenv
+    working_dir: /app/packages/db
+    command: sh -c "pnpm exec prisma db push --force-reset && pnpm exec tsx prisma/seed.ts"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -37,6 +37,21 @@ pnpm dev            # http://localhost:3000
 
 Recriar os dados fictícios do zero: `pnpm db:reset`.
 
+### Com Docker
+
+Requisito: Docker Desktop. Não precisa de Node nem Postgres instalados.
+
+```bash
+docker compose up -d --build                    # banco + app em http://localhost:3000
+docker compose --profile setup run --rm setup   # schema + seed fictício (apaga dados existentes)
+docker compose down                             # parar (dados ficam no volume pgdata; -v apaga)
+```
+
+Só o banco em Docker, com `pnpm dev` local: `docker compose up -d db` e use o `.env.example` como está (porta 5433).
+Portas ocupadas (ex.: Postgres local na 5433)? Troque com `DB_PORT=5434 WEB_PORT=3001 docker compose up -d`.
+
+O `Dockerfile` gera a imagem de produção do `apps/web` e serve para deploy em qualquer host de containers (Render, Fly, VPS). Lá, passe `DATABASE_URL` e `DIRECT_URL` como variáveis de ambiente.
+
 Para usar a branch `dev` do Neon (D-012) em vez do Postgres local, troque `DATABASE_URL` (string pooled) e `DIRECT_URL` (string direta) no `.env`.
 
 ## Estrutura

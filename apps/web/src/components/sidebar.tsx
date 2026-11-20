@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CheckSquare, GraduationCap, Kanban, LayoutDashboard, Menu, School, Sprout, Users, X } from "lucide-react";
+import { CalendarDays, ChartColumn, CheckSquare, GraduationCap, Kanban, LayoutDashboard, Menu, School, Sprout, Users, X } from "lucide-react";
 import { Suspense, useState } from "react";
 
 const groups = [
@@ -22,6 +22,10 @@ const groups = [
       { href: "/responsaveis", label: "Responsáveis", icon: Users },
       { href: "/turmas", label: "Turmas", icon: School },
     ],
+  },
+  {
+    label: "Gestão",
+    items: [{ href: "/relatorios", label: "Relatórios", icon: ChartColumn }],
   },
 ];
 
